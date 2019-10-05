@@ -1,0 +1,8 @@
+[package]
+authors = ["albx79 <otrebla79>"]
+edition = "2018"
+name = "what-bump"
+version = "0.1.0"
+[dependencies]
+git2 = "0.10"
+
