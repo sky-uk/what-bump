@@ -5,4 +5,4 @@ name = "what-bump"
 version = "0.1.0"
 [dependencies]
 git2 = "0.10"
-
+structopt = "0.3.2"
