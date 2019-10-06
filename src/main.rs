@@ -4,6 +4,8 @@ use std::error::Error;
 use git2::Repository;
 
 use crate::CommitType::{Feature, Fix, Other};
+use crate::BumpType::{Major, Patch, Minor};
+use std::fmt::{Display, Formatter};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let repo = Repository::open("./")?;
@@ -14,7 +16,6 @@ fn main() -> Result<(), Box<dyn Error>> {
     loop {
         let msg = commit.message().unwrap_or("<no commit message>");
         let conv_comm = parse_commit_message(msg);
-        println!("{}: {:?}", msg, conv_comm);
         if conv_comm > max_commit {
             max_commit = conv_comm;
         }
@@ -24,7 +25,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
     }
 
-    println!("Max commit: {:?}", max_commit);
+    let bump_type: BumpType = max_commit.into();
+    println!("{}", bump_type);
     Ok(())
 }
 
@@ -47,6 +49,16 @@ fn parse_commit_message(original_msg: &str) -> ConventionalCommit {
 #[derive(Debug, Eq, Ord, PartialOrd, PartialEq)]
 enum CommitType {
     Other, Fix, Feature
+}
+
+impl Into<BumpType> for CommitType {
+    fn into(self) -> BumpType {
+        match self {
+            Other => BumpType::None,
+            Fix => Patch,
+            Feature => Minor,
+        }
+    }
 }
 
 #[derive(Debug, Eq, PartialEq)]
@@ -75,5 +87,26 @@ impl PartialOrd for ConventionalCommit {
 impl Default for ConventionalCommit {
     fn default() -> Self {
         ConventionalCommit { typ: Other, breaking: false }
+    }
+}
+
+impl Into<BumpType> for ConventionalCommit {
+    fn into(self) -> BumpType {
+        if self.breaking {
+            Major
+        } else {
+            self.typ.into()
+        }
+    }
+}
+
+#[derive(Debug)]
+enum BumpType {
+    None, Patch, Minor, Major
+}
+
+impl Display for BumpType {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        std::fmt::Debug::fmt(self, f)
     }
 }
