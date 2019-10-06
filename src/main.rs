@@ -1,10 +1,9 @@
+use std::cmp::Ordering;
 use std::error::Error;
-use std::fmt::{Display, Formatter};
 
 use git2::Repository;
-use crate::CommitType::{Fix, Feature, Other};
-use std::cmp::Ordering;
-use std::cmp::Ordering::Less;
+
+use crate::CommitType::{Feature, Fix, Other};
 
 fn main() -> Result<(), Box<dyn Error>> {
     let repo = Repository::open("./")?;
@@ -78,14 +77,3 @@ impl Default for ConventionalCommit {
         ConventionalCommit { typ: Other, breaking: false }
     }
 }
-
-#[derive(Debug)]
-struct WBError(String);
-
-impl Display for WBError {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        self.0.fmt(f)
-    }
-}
-
-impl Error for WBError {}
