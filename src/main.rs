@@ -27,14 +27,14 @@ fn main() -> Result<(), Box<dyn Error>> {
     let up_to = repo.revparse_single(&config.up_to_revision)?.peel_to_commit()?;
 
     loop {
+        if commit.id() == up_to.id() {
+            break;
+        }
+
         let msg = commit.message().unwrap_or("<no commit message>");
         let conv_comm = ConventionalCommit::from(msg);
         if conv_comm > max_commit {
             max_commit = conv_comm;
-        }
-
-        if commit.id() == up_to.id() {
-            break;
         }
 
         commit = match commit.parent(0) {
