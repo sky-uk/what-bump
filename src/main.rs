@@ -9,19 +9,24 @@ use structopt::StructOpt;
 use crate::BumpType::{Major, Minor, Patch};
 
 #[derive(Debug, StructOpt)]
-#[structopt(name = "what-bump", about = "Automatically bump version based on conventional commits")]
+#[structopt(name = "what-bump", about = r#"Detect version bump based on Conventional Commits
+
+what-bump analyses your commit history, written according to the Conventional Commits specification (https://www.conventionalcommits.org/en/v1.0.0/), and outputs the type of version bump you need to do (one of Major, Minor, Patch, or None).
+
+Optionally, if you specify the current version of your software, what-bump will print the bumped version (instead of the bump type).
+"#)]
 struct Config {
     #[structopt(about = "Analyse commits up to this one")]
     up_to_revision: String,
-    #[structopt(long, short)]
+    #[structopt(long, short, help = "Current version of your software")]
     from: Option<Version>,
-    #[structopt(long, short)]
-    path: Option<PathBuf>
+    #[structopt(long, short, default_value = "./", help = "Location of the GIT repo")]
+    path: PathBuf
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let config = Config::from_args();
-    let repo = Repository::open(config.path.unwrap_or(PathBuf::from("./")))?;
+    let repo = Repository::open(config.path)?;
 
     let mut commit = repo.head()?.peel_to_commit()?;
     let mut max_commit = BumpType::None;
