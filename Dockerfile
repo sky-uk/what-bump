@@ -1,6 +1,8 @@
-FROM scratch
+FROM rust:1.36
 
-COPY target/x86_64-unknown-linux-musl/release/what-bump .
+WORKDIR /usr/src/myapp
+COPY . .
+
+RUN cargo install --path .
 
 CMD ["what-bump"]
-
