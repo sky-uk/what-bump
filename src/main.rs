@@ -1,12 +1,13 @@
+mod bumping;
+
 use std::error::Error;
-use std::fmt::{Display, Formatter};
 use std::path::PathBuf;
 
 use git2::Repository;
 use semver::Version;
 use structopt::StructOpt;
 
-use crate::BumpType::{Major, Minor, Patch};
+use crate::bumping::{BumpType, Bump};
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "what-bump", about = r#"Detect version bump based on Conventional Commits
@@ -16,7 +17,7 @@ what-bump analyses your commit history, written according to the Conventional Co
 Optionally, if you specify the current version of your software, what-bump will print the bumped version (instead of the bump type).
 "#)]
 struct Config {
-    #[structopt(about = "Analyse commits up to this one")]
+    #[structopt(about = "Analyse commits up to this one (exclusive)")]
     up_to_revision: String,
     #[structopt(long, short, help = "Current version of your software")]
     from: Option<Version>,
@@ -29,7 +30,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let repo = Repository::open(config.path)?;
 
     let mut commit = repo.head()?.peel_to_commit()?;
-    let mut max_commit = BumpType::None;
+    let mut max_commit = BumpType::default();
     let up_to = repo.revparse_single(&config.up_to_revision)?.peel_to_commit()?;
 
     loop {
@@ -57,50 +58,4 @@ fn main() -> Result<(), Box<dyn Error>> {
     ;
     println!("{}", output);
     Ok(())
-}
-
-impl From<&str> for BumpType {
-    fn from(original_msg: &str) -> Self {
-        let first_line = &original_msg[0..original_msg.find('\n').unwrap_or(original_msg.len())];
-        let conventional_prefix = first_line[0..first_line.find(':').unwrap_or(first_line.len())].to_ascii_lowercase();
-
-        let breaking = conventional_prefix.contains('!') || original_msg.contains("\nBREAKING CHANGE");
-
-        if breaking {
-            BumpType::Major
-        } else if conventional_prefix.starts_with("fix") {
-            BumpType::Patch
-        } else if conventional_prefix.starts_with("feat") {
-            BumpType::Minor
-        } else {
-            BumpType::None
-        }
-    }
-}
-
-#[derive(Debug, Eq, Ord, PartialOrd, PartialEq)]
-enum BumpType {
-    None, Patch, Minor, Major
-}
-
-impl Display for BumpType {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        std::fmt::Debug::fmt(self, f)
-    }
-}
-
-trait Bump {
-    fn bump(self, bt: &BumpType) -> Version;
-}
-
-impl Bump for Version {
-    fn bump(mut self, bt: &BumpType) -> Version {
-        match bt {
-            Patch => self.increment_patch(),
-            Minor => self.increment_minor(),
-            Major => self.increment_major(),
-            BumpType::None => (),
-        }
-        self
-    }
 }
