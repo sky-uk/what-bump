@@ -1,13 +1,14 @@
 mod bumping;
 
 use std::error::Error;
-use std::path::PathBuf;
 
-use git2::Repository;
+use git2::{Repository, Commit};
 use semver::Version;
 use structopt::StructOpt;
 
 use crate::bumping::{BumpType, Bump};
+use std::fmt::{Debug, Formatter};
+use std::fmt;
 
 #[derive(Debug, StructOpt)]
 #[structopt(name = "what-bump", about = r#"Detect version bump based on Conventional Commits
@@ -22,40 +23,67 @@ struct Config {
     #[structopt(long, short, help = "Current version of your software")]
     from: Option<Version>,
     #[structopt(long, short, default_value = "./", help = "Location of the GIT repo")]
-    path: PathBuf
+    path: ConventionalRepo,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
-    let config = Config::from_args();
-    let repo = Repository::open(config.path)?;
+    let config: Config = Config::from_args();
 
-    let mut commit = repo.head()?.peel_to_commit()?;
-    let mut max_commit = BumpType::default();
-    let up_to = repo.revparse_single(&config.up_to_revision)?.peel_to_commit()?;
+    let max_bump_type = config.path.commits_up_to(&config.up_to_revision)?
+        .map(|commit| BumpType::from(commit.message().unwrap_or("<no commit message")))
+        .max()
+        .unwrap_or_default();
 
-    loop {
-        if commit.id() == up_to.id() {
-            break;
-        }
-
-        let msg = commit.message().unwrap_or("<no commit message>");
-        let conv_comm = BumpType::from(msg);
-        if conv_comm > max_commit {
-            max_commit = conv_comm;
-        }
-
-        commit = match commit.parent(0) {
-            Ok(parent) => parent,
-            Err(_) => break,
-        }
-    }
-
-    let bump_type: BumpType = max_commit.into();
     let output = config.from
-        .map(|v| v.bump(&bump_type))
-        .map(|v| v.to_string())
-        .unwrap_or(format!("{}", bump_type))
-    ;
+        .map(|v| v.bump(&max_bump_type).to_string())
+        .unwrap_or(format!("{}", max_bump_type));
+
     println!("{}", output);
     Ok(())
+}
+
+struct ConventionalRepo(Repository);
+
+impl Debug for ConventionalRepo {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        self.0.path().fmt(f)
+    }
+}
+
+impl std::str::FromStr for ConventionalRepo {
+    type Err = git2::Error;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        Repository::open(s).map(ConventionalRepo)
+    }
+}
+
+impl ConventionalRepo {
+    pub fn commits_up_to(&self, revision: &str) -> Result<CommitIterator, Box<dyn Error>> {
+        let result = CommitIterator {
+            up_to: self.0.revparse_single(revision)?.peel_to_commit()?,
+            current_commit: self.0.head()?.peel_to_commit()?
+        };
+        Ok(result)
+    }
+}
+
+struct CommitIterator<'a> {
+    up_to: Commit<'a>,
+    current_commit: Commit<'a>,
+}
+
+impl<'a> Iterator for CommitIterator<'a> {
+    type Item = Commit<'a>;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        if self.up_to.id() == self.current_commit.id() {
+            None
+        } else {
+            let result = self.current_commit.clone();
+            // FIXME should warn and terminate iteration if there's more than one parent
+            self.current_commit = self.current_commit.parent(0).unwrap_or(self.up_to.clone());
+            Some(result)
+        }
+    }
 }
