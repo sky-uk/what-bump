@@ -2,6 +2,7 @@ use std::error::Error;
 
 use semver::Version;
 use structopt::StructOpt;
+use fallible_iterator::FallibleIterator;
 
 use crate::bumping::{Bump, BumpType};
 
@@ -28,8 +29,8 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::from_args();
 
     let max_bump_type = config.path.commits_up_to(&config.up_to_revision)?
-        .map(|commit| BumpType::from(commit.message().unwrap_or("<no commit message")))
-        .max()
+        .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message"))))
+        .max()?
         .unwrap_or_default();
 
     let output = config.from
