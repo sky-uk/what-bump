@@ -36,7 +36,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::from_args();
 
     let max_bump_type = config.path.commits_up_to(&config.up_to_revision)?
-        .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message"))))
+        .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message>"))))
         .max()?
         .unwrap_or_default();
 
