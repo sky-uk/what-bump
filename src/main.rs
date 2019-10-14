@@ -9,19 +9,26 @@ use crate::bumping::{Bump, BumpType};
 mod bumping;
 mod repo;
 
+/// Detect version bump based on Conventional Commits
+///
+/// what-bump analyses your commit history, written according to the Conventional Commits specification
+/// (https://www.conventionalcommits.org/en/v1.0.0/), and outputs the type of version bump you need to
+/// do (one of Major, Minor, Patch, or None).
+///
+/// Optionally, if you specify the current version of your software, what-bump will print the bumped
+/// version (instead of the bump type).
 #[derive(Debug, StructOpt)]
-#[structopt(name = "what-bump", about = r#"Detect version bump based on Conventional Commits
-
-what-bump analyses your commit history, written according to the Conventional Commits specification (https://www.conventionalcommits.org/en/v1.0.0/), and outputs the type of version bump you need to do (one of Major, Minor, Patch, or None).
-
-Optionally, if you specify the current version of your software, what-bump will print the bumped version (instead of the bump type).
-"#)]
+#[structopt(name = "what-bump")]
 struct Config {
-    #[structopt(about = "Analyse commits up to this one (exclusive)")]
+    /// Analyse commits up to this one (exclusive)
     up_to_revision: String,
-    #[structopt(long, short, help = "Current version of your software")]
+
+    /// Current version of your software
+    #[structopt(long, short)]
     from: Option<Version>,
-    #[structopt(long, short, default_value = "./", help = "Location of the GIT repo")]
+
+    /// Location of the GIT repo
+    #[structopt(long, short, default_value = "./")]
     path: repo::ConventionalRepo,
 }
 
