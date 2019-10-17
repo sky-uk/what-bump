@@ -8,6 +8,7 @@ use crate::bumping::{Bump, BumpType};
 
 mod bumping;
 mod repo;
+mod changelog;
 
 /// Detect version bump based on Conventional Commits
 ///

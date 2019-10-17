@@ -10,6 +10,8 @@ semver = "0.9"
 structopt = "0.3.3"
 simple-error = "0.2"
 fallible-iterator = "0.2.0"
+askama = "0.8"
+chrono = "0.4.9"
 
 [dependencies.git2]
 version = "0.10"
