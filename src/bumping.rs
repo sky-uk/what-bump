@@ -66,8 +66,8 @@ pub trait Bump {
 
 impl From<&str> for BumpType {
     fn from(commit_msg: &str) -> Self {
-        let first_line = commit_msg.first_line(); //&commit_msg[0..commit_msg.find('\n').unwrap_or(commit_msg.len())];
-        let conventional_prefix = first_line.prefix();//[0..first_line.find(':').unwrap_or(first_line.len())].to_ascii_lowercase();
+        let first_line = commit_msg.first_line();
+        let conventional_prefix = first_line.prefix();
         let breaking = conventional_prefix.contains('!') || commit_msg.contains("\nBREAKING CHANGE");
 
         if breaking {
