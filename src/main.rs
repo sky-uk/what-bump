@@ -49,14 +49,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         .max()?
         .unwrap_or_default();
 
-    let output = config.from
-        .map(|v| v.bump(&max_bump_type).to_string())
+    let new_version = config.from.map(|v| v.bump(&max_bump_type));
+    let output = new_version.clone()
+        .map(|v| v.to_string())
         .unwrap_or(max_bump_type.to_string());
 
     if let Some(cl_path) = config.changelog {
         use askama::Template;
 
-        let changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?)?;
+        let mut changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?)?;
+        if let Some(new_version) = new_version {
+            changelog.version = new_version;
+        }
         let mut cl_file = File::create(cl_path)?;
         cl_file.write_all(changelog.render()?.as_ref())?;
     }
