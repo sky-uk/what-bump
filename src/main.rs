@@ -56,7 +56,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(cl_path) = config.changelog {
         use askama::Template;
 
-        let changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?);
+        let changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?)?;
         let mut cl_file = File::create(cl_path)?;
         cl_file.write_all(changelog.render()?.as_ref())?;
     }
