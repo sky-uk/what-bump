@@ -1,10 +1,14 @@
 use std::error::Error;
+use std::fs::File;
+use std::io::Write;
+use std::path::PathBuf;
 
+use fallible_iterator::FallibleIterator;
 use semver::Version;
 use structopt::StructOpt;
-use fallible_iterator::FallibleIterator;
 
 use crate::bumping::{Bump, BumpType};
+use crate::changelog::ChangeLog;
 
 mod bumping;
 mod repo;
@@ -31,6 +35,10 @@ struct Config {
     /// Location of the GIT repo
     #[structopt(long, short, default_value = "./")]
     path: repo::ConventionalRepo,
+
+    /// Also generate a changelog, and write it to this file
+    #[structopt(long, short)]
+    changelog: Option<PathBuf>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -45,6 +53,13 @@ fn main() -> Result<(), Box<dyn Error>> {
         .map(|v| v.bump(&max_bump_type).to_string())
         .unwrap_or(max_bump_type.to_string());
 
+    if let Some(cl_path) = config.changelog {
+        use askama::Template;
+
+        let changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?);
+        let mut cl_file = File::create(cl_path)?;
+        cl_file.write_all(changelog.render()?.as_ref())?;
+    }
     println!("{}", output);
     Ok(())
 }

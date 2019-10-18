@@ -34,13 +34,13 @@ impl FirstLine<'_> for &str {
 pub struct LogEntry<'a> {
     pub scope: Option<String>,
     pub description: String,
-    pub commit: &'a Commit<'a>,
+    pub commit: Commit<'a>,
 }
 
-impl<'a> TryFrom<&'a Commit<'a>> for LogEntry<'a> {
+impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
     type Error = Box<dyn Error>;
 
-    fn try_from(commit: &'a Commit<'a>) -> Result<LogEntry<'a>, Box<dyn Error>> {
+    fn try_from(commit: Commit<'a>) -> Result<LogEntry<'a>, Box<dyn Error>> {
         let commit_msg = commit.message().ok_or(SimpleError::new("No commit message"))?;
         if BumpType::from(commit_msg) == BumpType::None {
             return Err(Box::new(SimpleError::new("Not a conventional commit")));

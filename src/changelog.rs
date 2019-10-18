@@ -1,8 +1,12 @@
-use git2::Commit;
+use std::convert::TryFrom;
 
 use askama::Template;
-use semver::Version;
 use chrono::prelude::*;
+use fallible_iterator::FallibleIterator;
+use git2::Commit;
+use semver::Version;
+use simple_error::SimpleError;
+
 use crate::bumping::{BumpType, LogEntry};
 
 #[derive(Template)]
@@ -15,20 +19,34 @@ pub struct ChangeLog<'a> {
     pub breaking: Vec<LogEntry<'a>>,
 }
 
-impl ChangeLog<'_> {
-    pub fn new<'a>(commits: &mut dyn Iterator<Item=Commit>) -> ChangeLog<'a> {
-        let result = ChangeLog {
+impl Default for ChangeLog<'_> {
+    fn default() -> Self {
+        ChangeLog {
             version: Version::parse("0.0.0").unwrap(),
             date: Local::today(),
             fixes: vec![],
             features: vec![],
             breaking: vec![]
-        };
-        for commit in commits {
+        }
+    }
+}
+
+impl ChangeLog<'_> {
+    pub fn new<'a, I: FallibleIterator<Item=Commit<'a>, Error=SimpleError>>(commits: I) -> ChangeLog<'a> {
+        let mut result = ChangeLog::<'a>::default();
+        let _ = commits.for_each(|ref commit| {
             let msg = commit.message().unwrap_or_default();
             let bump_type = BumpType::from(msg);
-            if bump_type == BumpType::None { continue; }
-        }
+            let entry= LogEntry::try_from(commit.clone())
+                .map_err(|e| SimpleError::new(e.description()))?;
+            match bump_type {
+                BumpType::Patch => result.fixes.push(entry),
+                BumpType::Minor => result.features.push(entry),
+                BumpType::Major => result.breaking.push(entry),
+                BumpType::None => (),
+            };
+            Ok(())
+        });
         result
     }
 }
