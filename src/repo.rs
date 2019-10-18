@@ -6,6 +6,9 @@ use git2::{Commit, Repository};
 use simple_error::SimpleError;
 use fallible_iterator::FallibleIterator;
 
+/// A git Repository whose messages respect the Conventional Commits specification
+///
+/// Can be created from the path of the git repo.
 pub struct ConventionalRepo(Repository);
 
 impl Debug for ConventionalRepo {
@@ -46,6 +49,8 @@ impl<'a> FallibleIterator for CommitIterator<'a> {
         if self.up_to.id() == self.current_commit.id() || n_parents == 0 {
             Ok(None)
         } else if n_parents > 1 {
+            // FIXME we need to handle multi-parent commits, at least in the case where there's an
+            // unambiguous chain to the `up_to` revision
             Err(SimpleError::new(format!("Commit {} has more than one parent", self.current_commit.id())))
         } else {
             let result = self.current_commit.clone();

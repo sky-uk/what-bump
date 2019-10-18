@@ -10,6 +10,7 @@ use simple_error::SimpleError;
 use crate::bumping::{BumpType, LogEntry};
 use std::error::Error;
 
+/// Contains all data needed to write the changelog
 #[derive(Template)]
 #[template(path="CHANGELOG.md", escape = "none")]
 pub struct ChangeLog<'a> {

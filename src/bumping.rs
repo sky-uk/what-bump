@@ -5,9 +5,15 @@ use std::convert::TryFrom;
 use std::error::Error;
 use simple_error::SimpleError;
 
-trait FirstLine<'a> {
+/// Extension methods for `&str`, useful for handling conventional commits
+pub trait FirstLine<'a> {
+    /// The first line of a conventional commit
     fn first_line(&'a self) -> &'a str;
+
+    /// The part before the colon ":" symbol, i.e. type and optional scope
     fn prefix(&self) -> String;
+
+    /// Split a conventional commit message into type and description
     fn split_at_colon(&'a self) -> (String, &'a str);
 }
 
@@ -31,6 +37,9 @@ impl FirstLine<'_> for &str {
     }
 }
 
+/// A change-log entry
+///
+/// Can be created from a git commit
 pub struct LogEntry<'a> {
     pub scope: Option<String>,
     pub description: String,
@@ -47,11 +56,14 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
         }
         let first_line = commit_msg.first_line();
         let (_, description) = first_line.split_at_colon();
-        let scope = None;
+        let scope = None; // FIXME parse scope
         Ok(LogEntry { scope, description: description.to_owned(), commit })
     }
 }
 
+/// The different types of version bumps that one can do
+///
+/// Can be created from a commit message.
 #[derive(Debug, Eq, Ord, PartialOrd, PartialEq)]
 pub enum BumpType {
     None,
@@ -60,6 +72,7 @@ pub enum BumpType {
     Major,
 }
 
+/// Extension method for Version, that adds the ability to perform a version bump according to BumpType
 pub trait Bump {
     fn bump(self, bt: &BumpType) -> Self;
 }
