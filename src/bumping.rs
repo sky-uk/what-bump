@@ -15,6 +15,9 @@ pub trait FirstLine<'a> {
 
     /// Split a conventional commit message into type and description
     fn split_at_colon(&'a self) -> (String, &'a str);
+
+    /// Find a substring between (parenthesis) and return it if present
+    fn extract_scope(&self) -> Option<String>;
 }
 
 impl FirstLine<'_> for &str {
@@ -34,6 +37,13 @@ impl FirstLine<'_> for &str {
             ""
         };
         (prefix, description)
+    }
+
+    fn extract_scope(&self) -> Option<String> {
+        match (self.find("("), self.find(")")) {
+            (Some(open), Some(closed)) if closed > open => Some(self[open+1..closed].into()),
+            _ => None
+        }
     }
 }
 
@@ -56,11 +66,11 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
         }
         let first_line = commit_msg.first_line();
         let (prefix, description) = first_line.split_at_colon();
-        let scope = match (prefix.find("("), prefix.find(")")) {
-            (Some(open), Some(closed)) if closed > open => Some(prefix[open+1..closed].into()),
-            _ => None
-        };
-        Ok(LogEntry { scope, description: description.to_owned(), commit })
+        Ok(LogEntry {
+            scope: prefix.as_str().extract_scope(),
+            description: description.to_owned(),
+            commit,
+        })
     }
 }
 
