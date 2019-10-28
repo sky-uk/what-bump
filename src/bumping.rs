@@ -41,7 +41,6 @@ impl FirstLine<'_> for &str {
 ///
 /// Can be created from a git commit
 pub struct LogEntry<'a> {
-    // FIXME output scope and commit id (with link?) to changelog
     pub scope: Option<String>,
     pub description: String,
     pub commit: Commit<'a>,
@@ -56,8 +55,11 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
             return Err(Box::new(SimpleError::new("Not a conventional commit")));
         }
         let first_line = commit_msg.first_line();
-        let (_, description) = first_line.split_at_colon();
-        let scope = None; // FIXME parse scope
+        let (prefix, description) = first_line.split_at_colon();
+        let scope = match (prefix.find("("), prefix.find(")")) {
+            (Some(open), Some(closed)) if closed > open => Some(prefix[open+1..closed].into()),
+            _ => None
+        };
         Ok(LogEntry { scope, description: description.to_owned(), commit })
     }
 }
