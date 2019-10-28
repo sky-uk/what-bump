@@ -41,6 +41,7 @@ impl FirstLine<'_> for &str {
 ///
 /// Can be created from a git commit
 pub struct LogEntry<'a> {
+    // FIXME output scope and commit id (with link?) to changelog
     pub scope: Option<String>,
     pub description: String,
     pub commit: Commit<'a>,

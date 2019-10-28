@@ -4,13 +4,13 @@
 
 ### ⚠ BREAKING CHANGES
 {% for i in breaking -%}
-* {{i.description}}
+* {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
 {% endfor %}
 ### Features
 {% for i in features -%}
-* {{i.description}}
+* {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
 {% endfor %}
 ### Bug Fixes
 {% for i in fixes -%}
-* {{i.description}}
+* {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
 {% endfor %}
