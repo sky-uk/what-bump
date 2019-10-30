@@ -1,5 +1,7 @@
 # What Bump?
 
+[![CircleCI](https://circleci.com/gh/sky-uk/what-bump.svg?style=svg&circle-token=bcb5547b4ce67d86715e1ce8f2a5c45b4bedba7d)](https://circleci.com/gh/sky-uk/what-bump)
+
 `what-bump` is a simple tool that reads the commit history of a git repository,
 and uses commit messages to decide what kind of version bump is required.
 
