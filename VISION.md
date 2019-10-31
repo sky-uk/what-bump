@@ -1,4 +1,4 @@
-## [ProjectName] Vision
+## What-Bump – Vision
 
 ### Goals
 
