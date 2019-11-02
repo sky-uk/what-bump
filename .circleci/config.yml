@@ -28,3 +28,5 @@ jobs:
       - run:
           name: Run all tests
           command: cargo test --all
+      - store_artifacts:
+          path: target/debug/what-bump
