@@ -4,6 +4,7 @@ use git2::Commit;
 use std::convert::TryFrom;
 use std::error::Error;
 use simple_error::SimpleError;
+use std::str::FromStr;
 
 /// Extension methods for `&str`, useful for handling conventional commits
 pub trait FirstLine<'a> {
@@ -89,6 +90,20 @@ pub enum BumpType {
 /// Extension method for Version, that adds the ability to perform a version bump according to BumpType
 pub trait Bump {
     fn bump(self, bt: &BumpType) -> Self;
+}
+
+impl FromStr for BumpType {
+    type Err = SimpleError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s.to_ascii_lowercase().as_str() {
+            "none" => Ok(BumpType::None),
+            "patch" => Ok(BumpType::Patch),
+            "minor" => Ok(BumpType::Minor),
+            "major" => Ok(BumpType::Major),
+            x => Err(SimpleError::new(format!("Not a bump specification: {}", x)))
+        }
+    }
 }
 
 impl From<&str> for BumpType {

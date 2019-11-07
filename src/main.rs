@@ -9,6 +9,7 @@ use structopt::StructOpt;
 
 use crate::bumping::{Bump, BumpType};
 use crate::changelog::ChangeLog;
+use simple_error::SimpleError;
 
 mod bumping;
 mod repo;
@@ -26,6 +27,7 @@ mod changelog;
 #[structopt(name = "what-bump")]
 struct Config {
     /// Analyse commits up to this one (exclusive)
+    #[structopt(required_unless = "bump", default_value = "")]
     up_to_revision: String,
 
     /// Current version of your software
@@ -39,10 +41,25 @@ struct Config {
     /// Also generate a changelog, and write it to this file
     #[structopt(long, short)]
     changelog: Option<PathBuf>,
+
+    /// Perform the specified version bump (you must also specify `--from`)
+    #[structopt(long, short)]
+    bump: Option<BumpType>,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::from_args();
+
+    match (config.bump, &config.from) {
+        (Some(ref bump_type), Some(ref version)) => {
+            println!("{}", version.clone().bump(bump_type));
+            return Ok(());
+        },
+        (Some(_), None) => {
+            return Err(Box::new(SimpleError::new("If you specify `--bump`, you must also specify `--from`, otherwise I don't know what version to bump.")));
+        }
+        _ => (),
+    }
 
     let max_bump_type = config.path.commits_up_to(&config.up_to_revision)?
         .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message>"))))
