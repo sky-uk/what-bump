@@ -29,4 +29,4 @@ jobs:
           name: Run all tests
           command: cargo test --all
       - store_artifacts:
-          path: target/release/what-bump
+          path: target/x86_64-unknown-linux-musl/release/what-bump
