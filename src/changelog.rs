@@ -19,6 +19,7 @@ pub struct ChangeLog<'a> {
     pub fixes: Vec<LogEntry<'a>>,
     pub features: Vec<LogEntry<'a>>,
     pub breaking: Vec<LogEntry<'a>>,
+    pub other: Vec<LogEntry<'a>>,
 }
 
 impl Default for ChangeLog<'_> {
@@ -29,7 +30,8 @@ impl Default for ChangeLog<'_> {
             date: NaiveDate::from_yo(today.year(), today.ordinal()),
             fixes: vec![],
             features: vec![],
-            breaking: vec![]
+            breaking: vec![],
+            other: vec![],
         }
     }
 }
@@ -45,7 +47,7 @@ impl ChangeLog<'_> {
                     BumpType::Patch => result.fixes.push(entry),
                     BumpType::Minor => result.features.push(entry),
                     BumpType::Major => result.breaking.push(entry),
-                    BumpType::None => (),
+                    BumpType::None => result.other.push(entry),
                 },
                 _ => () // FIXME add logging
             }

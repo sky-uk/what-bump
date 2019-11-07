@@ -14,3 +14,7 @@
 {% for i in fixes -%}
 * {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
 {% endfor %}
+### Other Changes
+{% for i in other -%}
+* {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
+{% endfor %}

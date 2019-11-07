@@ -61,11 +61,12 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
 
     fn try_from(commit: Commit<'a>) -> Result<LogEntry<'a>, Box<dyn Error>> {
         let commit_msg = commit.message().ok_or(SimpleError::new("No commit message"))?;
-        if BumpType::from(commit_msg) == BumpType::None {
-            return Err(Box::new(SimpleError::new("Not a conventional commit")));
-        }
         let first_line = commit_msg.first_line();
         let (prefix, description) = first_line.split_at_colon();
+        let description = description.trim();
+        if description.is_empty() {
+            return Err(Box::new(SimpleError::new(format!("Empty commit message in {}", commit.id()))));
+        }
         Ok(LogEntry {
             scope: prefix.as_str().extract_scope(),
             description: description.to_owned(),
