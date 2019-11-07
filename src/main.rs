@@ -26,23 +26,30 @@ mod changelog;
 #[derive(Debug, StructOpt)]
 #[structopt(name = "what-bump")]
 struct Config {
-    /// Analyse commits up to this one (exclusive)
-    #[structopt(required_unless = "bump", default_value = "")]
-    up_to_revision: String,
+    /// Analyse commits up to this one (exclusive).
+    ///
+    /// This would normally be the commit corresponding to your previous release (it can be
+    /// a tag, a commit id, or anything else that GIT can parse).
+    #[structopt(required_unless = "bump")]
+    up_to_revision: Option<String>,
 
-    /// Current version of your software
+    /// Current version of your software.
     #[structopt(long, short)]
     from: Option<Version>,
 
-    /// Location of the GIT repo
+    /// Location of the GIT repo.
     #[structopt(long, short, default_value = "./")]
     path: repo::ConventionalRepo,
 
-    /// Also generate a changelog, and write it to this file
+    /// Also generate a changelog, and write it to this file.
     #[structopt(long, short)]
     changelog: Option<PathBuf>,
 
-    /// Perform the specified version bump (you must also specify `--from`)
+    /// Perform the specified version bump (you must also specify `--from`).
+    ///
+    /// Use this option if you know both the previous version, and the type of bump you need
+    /// to do. This will skip the analysis of commit messages, therefore you don't need to
+    /// provide a commit id if you use this option.
     #[structopt(long, short)]
     bump: Option<BumpType>,
 }
@@ -61,7 +68,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => (),
     }
 
-    let max_bump_type = config.path.commits_up_to(&config.up_to_revision)?
+    let up_to_revision = config.up_to_revision.unwrap();
+    let max_bump_type = config.path.commits_up_to(&up_to_revision)?
         .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message>"))))
         .max()?
         .unwrap_or_default();
@@ -74,7 +82,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(cl_path) = config.changelog {
         use askama::Template;
 
-        let mut changelog = ChangeLog::new(config.path.commits_up_to(&config.up_to_revision)?)?;
+        let mut changelog = ChangeLog::new(config.path.commits_up_to(&up_to_revision)?)?;
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
