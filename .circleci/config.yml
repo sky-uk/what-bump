@@ -41,3 +41,13 @@ jobs:
           command: |
             VERSION=$(what-bump --version)
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
+workflows:
+  version: 1
+  release:
+    jobs:
+      - build
+      - approve-release:
+          type: approval
+          requires: [build]
+      - publish-github-release:
+          requires: [approve-release]
