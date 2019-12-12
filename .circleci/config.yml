@@ -5,9 +5,9 @@ jobs:
     docker:
       - image: ekidd/rust-musl-builder:1.38.0
     steps:
+      - checkout
       - attach_workspace:
           at: ./artifacts
-      - checkout
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version
