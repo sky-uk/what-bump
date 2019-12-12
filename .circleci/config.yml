@@ -43,10 +43,9 @@ jobs:
       - run:
           name: Publish Release on GitHub
           command: |
-            VERSION=$(./artifacts/what-bump --version)
-            TAG=0.1.0
-            echo version, tag: $VERSION, $TAG
-            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} $TAG ./artifacts/
+            #VERSION=$(./artifacts/what-bump --version)
+            VERSION=0.1.0
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
 workflows:
   version: 2
   release:
