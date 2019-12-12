@@ -30,3 +30,14 @@ jobs:
           command: cargo test --all
       - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
+  publish-github-release:
+    docker:
+      - image: cibuilds/github:0.10
+    steps:
+      - attach_workspace:
+          at: ./artifacts
+      - run:
+          name: Publish Release on GitHub
+          command: |
+            VERSION=$(what-bump --version)
+            ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
