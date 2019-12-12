@@ -29,9 +29,9 @@ jobs:
           name: Run all tests
           command: cargo test --all
       - persist_to_workspace:
-          root: target
+          root: target/x86_64-unknown-linux-musl/release
           paths:
-            - x86_64-unknown-linux-musl/release
+            - what-bump
       - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
   publish-github-release:
