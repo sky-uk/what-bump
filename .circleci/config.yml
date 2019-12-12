@@ -5,6 +5,8 @@ jobs:
     docker:
       - image: ekidd/rust-musl-builder:1.38.0
     steps:
+      - attach_workspace:
+          at: ./artifacts
       - checkout
       - run:
           name: Version information
@@ -41,6 +43,7 @@ jobs:
           command: |
             pwd
             ls -l
+            ls -l ./artifacts/target/x86_64-unknown-linux-musl/release/what-bump
             #VERSION=$(what-bump --version)
             VERSION=0.1.0
             ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./artifacts/
