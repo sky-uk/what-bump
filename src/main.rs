@@ -1,15 +1,13 @@
 use std::error::Error;
-use std::fs::File;
-use std::io::Write;
 use std::path::PathBuf;
 
 use fallible_iterator::FallibleIterator;
 use semver::Version;
+use simple_error::SimpleError;
 use structopt::StructOpt;
 
 use crate::bumping::{Bump, BumpType};
 use crate::changelog::ChangeLog;
-use simple_error::SimpleError;
 
 mod bumping;
 mod repo;
@@ -33,7 +31,7 @@ struct Config {
     #[structopt(required_unless = "bump")]
     up_to_revision: Option<String>,
 
-    /// Current version of your software.
+    /// Old version of your software.
     #[structopt(long, short)]
     from: Option<Version>,
 
@@ -52,6 +50,10 @@ struct Config {
     /// provide a commit id if you use this option.
     #[structopt(long, short)]
     bump: Option<BumpType>,
+
+    /// Overwrite the changelog file instead of prepending to the existing one.
+    #[structopt(long, short)]
+    overwrite: bool,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -65,7 +67,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         (Some(_), None) => {
             return Err(Box::new(SimpleError::new("If you specify `--bump`, you must also specify `--from`, otherwise I don't know what version to bump.")));
         }
-        _ => (),
+        _ => ()
     }
 
     let up_to_revision = config.up_to_revision.unwrap();
@@ -82,12 +84,11 @@ fn main() -> Result<(), Box<dyn Error>> {
     if let Some(cl_path) = config.changelog {
         use askama::Template;
 
-        let mut changelog = ChangeLog::new(config.path.commits_up_to(&up_to_revision)?)?;
+        let mut changelog = ChangeLog::new(config.path.commits_up_to(&up_to_revision)?);
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        let mut cl_file = File::create(cl_path)?;
-        cl_file.write_all(changelog.render()?.as_ref())?;
+        changelog::save(cl_path, changelog.render()?.as_ref(), config.overwrite)?;
     }
     println!("{}", output);
     Ok(())
