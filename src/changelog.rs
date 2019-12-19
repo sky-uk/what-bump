@@ -60,7 +60,7 @@ impl ChangeLog<'_> {
     }
 }
 
-pub fn save(path_buf: PathBuf, content: &[u8], overwrite: bool) -> Result<(), Box<dyn Error>> {
+pub fn save(path_buf: &PathBuf, content: &[u8], overwrite: bool) -> Result<(), Box<dyn Error>> {
     let mut previous_file_content = Vec::new();
 
     if !overwrite && path_buf.exists() {

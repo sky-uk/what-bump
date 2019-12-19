@@ -88,7 +88,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        changelog::save(cl_path, changelog.render()?.as_ref(), config.overwrite)?;
+        changelog::save(&cl_path, changelog.render()?.as_ref(), config.overwrite)?;
     }
     println!("{}", output);
     Ok(())
