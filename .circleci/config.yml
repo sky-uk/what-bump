@@ -14,19 +14,19 @@ jobs:
           command: cargo generate-lockfile
       - restore_cache:
           keys:
-            - v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
+            - &cacheKey v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
-          name: Build all targets
+          name: Build what-bump
           command: cargo build --release
+      - run:
+          name: Run all tests
+          command: cargo test --all
       - save_cache:
           paths:
             - /usr/local/cargo/registry
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
-          key: v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
-      - run:
-          name: Run all tests
-          command: cargo test --all
+          key: *cacheKey
       - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
