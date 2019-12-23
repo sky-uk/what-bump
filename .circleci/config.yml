@@ -30,13 +30,3 @@ jobs:
           key: *cacheKey
       - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
-  release-build:
-    docker:
-      - image: ekidd/rust-musl-builder:1.38.0
-    steps:
-      - persist_to_workspace:
-          root: target/x86_64-unknown-linux-musl/release
-          paths:
-            - what-bump
-      - store_artifacts:
-          path: target/x86_64-unknown-linux-musl/release/what-bump
