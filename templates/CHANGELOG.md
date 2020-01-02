@@ -1,6 +1,5 @@
-# Changelog
 
-## {{version}} ({{date}})
+## Release {{version}} ({{date}})
 
 ### ⚠ BREAKING CHANGES
 {% for i in breaking -%}
@@ -18,3 +17,4 @@
 {% for i in other -%}
 * {%if i.scope.is_some()%}**{{i.scope.as_ref().unwrap()}}**: {%endif%}{{i.description}}
 {% endfor %}
+---

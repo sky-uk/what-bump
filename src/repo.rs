@@ -52,7 +52,7 @@ impl<'a> FallibleIterator for CommitIterator<'a> {
             if n_parents > 1 {
                 // FIXME we need to handle multi-parent commits, at least in the case where there's an
                 // unambiguous chain to the `up_to` revision
-                eprintln!("Commit {} has more than one parent", self.current_commit.id());
+                println!("Warning: commit {} has more than one parent", self.current_commit.id());
             }
             let result = self.current_commit.clone();
             self.current_commit = self.current_commit.parent(0).unwrap_or(self.up_to.clone());

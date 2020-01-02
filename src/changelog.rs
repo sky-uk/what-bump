@@ -1,4 +1,8 @@
 use std::convert::TryFrom;
+use std::error::Error;
+use std::fs::OpenOptions;
+use std::io::{Read, Write};
+use std::path::PathBuf;
 
 use askama::Template;
 use chrono::prelude::*;
@@ -8,11 +12,10 @@ use semver::Version;
 use simple_error::SimpleError;
 
 use crate::bumping::{BumpType, LogEntry};
-use std::error::Error;
 
 /// Contains all data needed to write the changelog
 #[derive(Template)]
-#[template(path="CHANGELOG.md", escape = "none")]
+#[template(path = "CHANGELOG.md", escape = "none")]
 pub struct ChangeLog<'a> {
     pub version: Version,
     pub date: NaiveDate,
@@ -37,9 +40,9 @@ impl Default for ChangeLog<'_> {
 }
 
 impl ChangeLog<'_> {
-    pub fn new<'a, I: FallibleIterator<Item=Commit<'a>, Error=SimpleError>>(commits: I) -> Result<ChangeLog<'a>, Box<dyn Error>> {
+    pub fn new<'a, I: FallibleIterator<Item=Commit<'a>, Error=SimpleError>>(commits: I) -> ChangeLog<'a> {
         let mut result = ChangeLog::<'a>::default();
-        commits.for_each(|ref commit| {
+        let _ = commits.for_each(|ref commit| {
             let msg = commit.message().unwrap_or_default();
             let bump_type = BumpType::from(msg);
             match LogEntry::try_from(commit.clone()) {
@@ -52,7 +55,29 @@ impl ChangeLog<'_> {
                 _ => () // FIXME add logging
             }
             Ok(())
-        })?;
-        Ok(result)
+        });
+        result
     }
+}
+
+pub fn save(path_buf: &PathBuf, content: &[u8], overwrite: bool) -> Result<(), Box<dyn Error>> {
+    let mut previous_file_content = Vec::new();
+
+    if !overwrite && path_buf.exists() {
+        OpenOptions::new()
+            .read(true)
+            .open(path_buf)?
+            .read_to_end(&mut previous_file_content)?;
+    }
+
+    let mut file = OpenOptions::new()
+        .write(true)
+        .truncate(true)
+        .create(true)
+        .open(path_buf)?;
+
+    file.write_all(content)?;
+    file.write_all(previous_file_content.as_ref())?;
+
+    Ok(())
 }
