@@ -66,7 +66,7 @@ pub fn save(path_buf: &PathBuf, content: &[u8], overwrite: bool) -> Result<(), B
     if !overwrite && path_buf.exists() {
         OpenOptions::new()
             .read(true)
-            .open(path_buf.clone())?
+            .open(path_buf)?
             .read_to_end(&mut previous_file_content)?;
     }
 
