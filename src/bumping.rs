@@ -169,16 +169,16 @@ mod test {
 
     #[test]
     fn test_parse_commit_messages() {
-        assert_eq!(BumpType::parse_commit_msg("feat: hello"), Ok(BumpType::Minor));
-        assert_eq!(BumpType::parse_commit_msg("FEAT: hello"), Ok(BumpType::Minor));
-        assert_eq!(BumpType::parse_commit_msg("feat!: hello"), Ok(BumpType::Major));
+        assert_eq!(BumpType::parse_commit_msg("feat: hello"), BumpType::Minor);
+        assert_eq!(BumpType::parse_commit_msg("FEAT: hello"), BumpType::Minor);
+        assert_eq!(BumpType::parse_commit_msg("feat!: hello"), BumpType::Major);
 
-        assert_eq!(BumpType::parse_commit_msg("fix: hello"), Ok(BumpType::Patch));
-        assert_eq!(BumpType::parse_commit_msg("Fix: hello"), Ok(BumpType::Patch));
-        assert_eq!(BumpType::parse_commit_msg("fix!: hello"), Ok(BumpType::Major));
+        assert_eq!(BumpType::parse_commit_msg("fix: hello"), BumpType::Patch);
+        assert_eq!(BumpType::parse_commit_msg("Fix: hello"), BumpType::Patch);
+        assert_eq!(BumpType::parse_commit_msg("fix!: hello"), BumpType::Major);
 
-        assert_eq!(BumpType::parse_commit_msg("chore"), Ok(BumpType::None));
-        assert_eq!(BumpType::parse_commit_msg("platypus: foo"), Err(BumpType::None));
+        assert_eq!(BumpType::parse_commit_msg("chore"), BumpType::None);
+        assert_eq!(BumpType::parse_commit_msg("platypus: foo"), BumpType::None);
     }
 }
 
