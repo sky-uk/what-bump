@@ -1,10 +1,11 @@
-use semver::Version;
-use std::fmt::{Display, Formatter};
-use git2::Commit;
 use std::convert::TryFrom;
 use std::error::Error;
-use simple_error::SimpleError;
+use std::fmt::{Display, Formatter};
 use std::str::FromStr;
+
+use git2::Commit;
+use semver::Version;
+use simple_error::SimpleError;
 
 /// Extension methods for `&str`, useful for handling conventional commits
 pub trait FirstLine<'a> {
@@ -92,6 +93,7 @@ pub trait Bump {
     fn bump(self, bt: &BumpType) -> Self;
 }
 
+/// Case-insensitive parse method for `BumpType`'s enum values
 impl FromStr for BumpType {
     type Err = SimpleError;
 
@@ -106,8 +108,42 @@ impl FromStr for BumpType {
     }
 }
 
-impl From<&str> for BumpType {
-    fn from(commit_msg: &str) -> Self {
+pub const OTHER_TYPES: &[&str] = &[
+    "build",
+    "ci",
+    "chore",
+    "docs",
+    "feat",
+    "fix",
+    "perf",
+    "refactor",
+    "revert",
+    "style",
+    "test"
+];
+
+pub trait ObserveParseError {
+    fn on_error(&mut self, commit_msg: &str, first_line: &str);
+}
+
+impl ObserveParseError for () {
+    fn on_error(&mut self, _commit_msg: &str, _first_line: &str) {
+        // No-op
+    }
+}
+
+impl BumpType {
+
+    pub fn parse_commit_msg(commit_msg: &str) -> Self {
+        BumpType::parse_commit_msg_with_errors(commit_msg, &mut ())
+    }
+
+    /// Parses a conventional commit message into a `BumpType`. If a non-conventional message
+    /// is encountered, the `error_observer` is called.
+    ///
+    /// A NO-OP implementation of `ObserveParseError` is provided for `()`, if you want to ignore
+    /// errors. (Non-conventional messages always generate `BumpType::None`).
+    pub fn parse_commit_msg_with_errors(commit_msg: &str, error_observer: &mut dyn ObserveParseError) -> Self {
         let first_line = commit_msg.first_line();
         let conventional_prefix = first_line.prefix();
         let breaking = conventional_prefix.contains('!') || commit_msg.contains("\nBREAKING CHANGE");
@@ -119,8 +155,30 @@ impl From<&str> for BumpType {
         } else if conventional_prefix.starts_with("feat") {
             BumpType::Minor
         } else {
+            if !OTHER_TYPES.contains(&conventional_prefix.as_str()) {
+                error_observer.on_error(commit_msg, first_line);
+            }
             BumpType::None
         }
+    }
+}
+
+#[cfg(test)]
+mod test {
+    use crate::bumping::BumpType;
+
+    #[test]
+    fn test_parse_commit_messages() {
+        assert_eq!(BumpType::parse_commit_msg("feat: hello"), BumpType::Minor);
+        assert_eq!(BumpType::parse_commit_msg("FEAT: hello"), BumpType::Minor);
+        assert_eq!(BumpType::parse_commit_msg("feat!: hello"), BumpType::Major);
+
+        assert_eq!(BumpType::parse_commit_msg("fix: hello"), BumpType::Patch);
+        assert_eq!(BumpType::parse_commit_msg("Fix: hello"), BumpType::Patch);
+        assert_eq!(BumpType::parse_commit_msg("fix!: hello"), BumpType::Major);
+
+        assert_eq!(BumpType::parse_commit_msg("chore"), BumpType::None);
+        assert_eq!(BumpType::parse_commit_msg("platypus: foo"), BumpType::None);
     }
 }
 

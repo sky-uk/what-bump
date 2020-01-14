@@ -13,6 +13,8 @@ simple-error = "0.2"
 fallible-iterator = "0.2.0"
 askama = "0.8"
 chrono = "0.4.9"
+log = "0.4.8"
+stderrlog = "0.4.3"
 
 [dependencies.git2]
 version = "0.10"

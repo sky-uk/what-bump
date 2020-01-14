@@ -5,6 +5,7 @@ use fallible_iterator::FallibleIterator;
 use semver::Version;
 use simple_error::SimpleError;
 use structopt::StructOpt;
+use log::warn;
 
 use crate::bumping::{Bump, BumpType};
 use crate::changelog::ChangeLog;
@@ -54,10 +55,32 @@ struct Config {
     /// Overwrite the changelog file instead of prepending to the existing one.
     #[structopt(long, short)]
     overwrite: bool,
+
+    /// Quit with an error if non-conventional commit messages are found.
+    ///
+    /// Default behaviour is to simply print a warning. Allowed values are those recommended
+    /// by https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional.
+    #[structopt(long)]
+    strict: bool,
+
+    /// Verbose mode (-v, -vv, -vvv, etc)
+    #[structopt(long, short, parse(from_occurrences))]
+    verbose: usize,
+}
+
+struct ParseError {
+    first_line: String
+}
+
+impl bumping::ObserveParseError for Vec<ParseError> {
+    fn on_error(&mut self, _commit_msg: &str, first_line: &str) {
+        self.push(ParseError{ first_line: first_line.to_owned() });
+    }
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
     let config: Config = Config::from_args();
+    stderrlog::new().module(module_path!()).verbosity(config.verbose + 2).init().unwrap();
 
     match (config.bump, &config.from) {
         (Some(ref bump_type), Some(ref version)) => {
@@ -70,11 +93,20 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => ()
     }
 
+    let mut errors_found: Vec<ParseError> = Vec::new();
     let up_to_revision = config.up_to_revision.unwrap();
     let max_bump_type = config.path.commits_up_to(&up_to_revision)?
-        .map(|commit| Ok(BumpType::from(commit.message().unwrap_or("<no commit message>"))))
+        .map(|commit| commit.message()
+            .map(|m| BumpType::parse_commit_msg_with_errors(m, &mut errors_found) )
+            .ok_or(SimpleError::new("No commit message"))
+        )
         .max()?
         .unwrap_or_default();
+
+    errors_found.iter().for_each(|e| warn!(r#"Not a conventional commit message: "{}""#, &e.first_line));
+    if config.strict && !errors_found.is_empty() {
+        return Err(Box::new(SimpleError::new("Some non-conventional commit messages were encountered while running in `strict` mode")));
+    }
 
     let new_version = config.from.map(|v| v.bump(&max_bump_type));
     let output = new_version.clone()

@@ -44,7 +44,7 @@ impl ChangeLog<'_> {
         let mut result = ChangeLog::<'a>::default();
         let _ = commits.for_each(|ref commit| {
             let msg = commit.message().unwrap_or_default();
-            let bump_type = BumpType::from(msg);
+            let bump_type = BumpType::parse_commit_msg(msg);
             match LogEntry::try_from(commit.clone()) {
                 Ok(entry) => match bump_type {
                     BumpType::Patch => result.fixes.push(entry),
