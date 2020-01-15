@@ -6,6 +6,7 @@ use std::str::FromStr;
 use git2::Commit;
 use semver::Version;
 use simple_error::SimpleError;
+use log::debug;
 
 /// Extension methods for `&str`, useful for handling conventional commits
 pub trait FirstLine<'a> {
@@ -80,7 +81,7 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
 /// The different types of version bumps that one can do
 ///
 /// Can be created from a commit message.
-#[derive(Debug, Eq, Ord, PartialOrd, PartialEq)]
+#[derive(Copy, Clone, Debug, Eq, Ord, PartialOrd, PartialEq)]
 pub enum BumpType {
     None,
     Patch,
@@ -147,19 +148,21 @@ impl BumpType {
         let first_line = commit_msg.first_line();
         let conventional_prefix = first_line.prefix();
         let breaking = conventional_prefix.contains('!') || commit_msg.contains("\nBREAKING CHANGE");
-
-        if breaking {
-            BumpType::Major
-        } else if conventional_prefix.starts_with("fix") {
-            BumpType::Patch
-        } else if conventional_prefix.starts_with("feat") {
-            BumpType::Minor
-        } else {
-            if !OTHER_TYPES.contains(&conventional_prefix.as_str()) {
-                error_observer.on_error(commit_msg, first_line);
-            }
-            BumpType::None
-        }
+        let result =
+            if breaking {
+                BumpType::Major
+            } else if conventional_prefix.starts_with("fix") {
+                BumpType::Patch
+            } else if conventional_prefix.starts_with("feat") {
+                BumpType::Minor
+            } else {
+                if !OTHER_TYPES.contains(&conventional_prefix.as_str()) {
+                    error_observer.on_error(commit_msg, first_line);
+                }
+                BumpType::None
+            };
+        debug!(r#"parsed "{}" into {} bump"#, first_line, result);
+        result
     }
 }
 

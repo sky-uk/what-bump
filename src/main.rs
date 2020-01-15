@@ -5,7 +5,7 @@ use fallible_iterator::FallibleIterator;
 use semver::Version;
 use simple_error::SimpleError;
 use structopt::StructOpt;
-use log::warn;
+use log::{warn, error};
 
 use crate::bumping::{Bump, BumpType};
 use crate::changelog::ChangeLog;
@@ -78,9 +78,25 @@ impl bumping::ObserveParseError for Vec<ParseError> {
     }
 }
 
-fn main() -> Result<(), Box<dyn Error>> {
+fn main() {
     let config: Config = Config::from_args();
-    stderrlog::new().module(module_path!()).verbosity(config.verbose + 2).init().unwrap();
+
+    if let Err(e) = what_bump(config) {
+        error!("{}", e);
+        print_error_cause(e.as_ref());
+        std::process::exit(1);
+    }
+}
+
+fn print_error_cause(error: &dyn Error) {
+    if let Some(error) = error.source() {
+        error!("caused by {}", error);
+        print_error_cause(error);
+    }
+}
+
+fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
+    stderrlog::new().module(module_path!()).verbosity(config.verbose + 2).init()?;
 
     match (config.bump, &config.from) {
         (Some(ref bump_type), Some(ref version)) => {
