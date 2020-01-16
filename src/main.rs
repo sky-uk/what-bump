@@ -6,6 +6,7 @@ use semver::Version;
 use simple_error::SimpleError;
 use structopt::StructOpt;
 use log::{warn, error};
+use lazy_static::lazy_static;
 
 use crate::bumping::{Bump, BumpType};
 use crate::changelog::ChangeLog;
@@ -13,6 +14,13 @@ use crate::changelog::ChangeLog;
 mod bumping;
 mod repo;
 mod changelog;
+
+lazy_static! {
+    static ref STRICT_HELP: String = format!(r#"Quit with an error if non-conventional commit messages are found.
+
+Default behaviour is to simply print a warning. Conventional messages start with
+one of the following types: {}."#, bumping::OTHER_TYPES.join(", "));
+}
 
 /// Detect version bump based on Conventional Commits
 ///
@@ -56,11 +64,7 @@ struct Config {
     #[structopt(long, short)]
     overwrite: bool,
 
-    /// Quit with an error if non-conventional commit messages are found.
-    ///
-    /// Default behaviour is to simply print a warning. Allowed values are those recommended
-    /// by https://github.com/conventional-changelog/commitlint/tree/master/%40commitlint/config-conventional.
-    #[structopt(long)]
+    #[structopt(long, help = &STRICT_HELP)]
     strict: bool,
 
     /// Verbose mode (-v, -vv, -vvv, etc)
