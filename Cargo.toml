@@ -9,6 +9,7 @@ repository = "https://github.com/sky-uk/what-bump"
 readme = "README.md"
 keywords = ["semver", "conventional commits"]
 categories = ["command-line-utilities", "development-tools::build-utils"]
+exclude = ["scripts/*", ".circleci/*", ".gitignore", "Dockerfile"]
 
 [badges]
 circle-ci = { repository = "sky-uk/what-bump", branch = "develop" }
