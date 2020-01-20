@@ -2,7 +2,7 @@
 authors = ["albx79 <otrebla79>"]
 edition = "2018"
 name = "what-bump"
-version = "0.0.0-UNRELEASED"
+version = "1.0.0"
 license = "BSD-3-Clause"
 description = "Detect required version bump based on conventional commit messages"
 
