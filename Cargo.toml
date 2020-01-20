@@ -13,8 +13,6 @@ exclude = ["scripts/*", ".circleci/*", ".gitignore", "Dockerfile"]
 
 [badges]
 circle-ci = { repository = "sky-uk/what-bump", branch = "develop" }
-is-it-maintained-issue-resolution = { repository = "sky-uk/what-bump" }
-is-it-maintained-open-issues = { repository = "sky-uk/what-bump" }
 maintenance = { status = "actively-developed" }
 
 [dependencies]
