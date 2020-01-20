@@ -7,7 +7,7 @@ license-file = "LICENSE"
 description = "Detect required version bump based on conventional commit messages"
 repository = "https://github.com/sky-uk/what-bump"
 readme = "README.md"
-keywords = ["semver", "conventional commits"]
+keywords = ["semver", "conventional-commit"]
 categories = ["command-line-utilities", "development-tools::build-utils"]
 exclude = ["scripts/*", ".circleci/*", ".gitignore", "Dockerfile"]
 
