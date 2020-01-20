@@ -27,7 +27,7 @@ to be.
 
 This tool, `what-bump`, sets out to be a simple, self-explanatory, zero-configuration
 utility to do one and only one thing: determine your software's next version number
-bases on all the commit messages up to a previous revision. You need to specify what
+based on all the commit messages up to a previous revision. You need to specify what
 the previous revision is (we assume you have it tagged and know enough `bash` magic to
 do it) and what the current version is (ditto).
 
@@ -61,17 +61,21 @@ will be ignored and won't contribute to a version bump.
 ### With Cargo
 
 `what-bump` is written in [Rust](https://www.rust-lang.org). You'll need at least version 
-1.36 to build (that's what I used). Install rust following the instruction on the official
+1.36 to build (that's what I used). Install rust following the instructions on the official
 website. 
 
-`what-bump` depends on [git2-rs](https://github.com/alexcrichton/git2-rs), which requires
+To  install from [crates.io](https://crates.io) just type
+
+    cargo install what-bump
+
+It depends on [git2-rs](https://github.com/alexcrichton/git2-rs), which requires
 libgit2 to be installed on your system. It should already be available if you're using git.
 
-Build with
+To build from sources, clone the repository and build with:
 
     cargo build --release
     
-and install locally with
+Then you can install it locally with
 
     cargo install --path .
 
