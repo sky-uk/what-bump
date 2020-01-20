@@ -3,8 +3,18 @@ authors = ["albx79 <otrebla79>"]
 edition = "2018"
 name = "what-bump"
 version = "0.0.0-UNRELEASED"
-license = "BSD-3-Clause"
+license-file = "LICENSE"
 description = "Detect required version bump based on conventional commit messages"
+repository = "https://github.com/sky-uk/what-bump"
+readme = "README.md"
+keywords = ["semver", "conventional commits"]
+categories = ["command-line-utilities", "development-tools::build-utils"]
+
+[badges]
+circle-ci = { repository = "sky-uk/what-bump", branch = "develop" }
+is-it-maintained-issue-resolution = { repository = "sky-uk/what-bump" }
+is-it-maintained-open-issues = { repository = "sky-uk/what-bump" }
+maintenance = { status = "actively-developed" }
 
 [dependencies]
 semver = "0.9"
