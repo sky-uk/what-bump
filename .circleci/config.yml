@@ -7,6 +7,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Skip "chore" commits
+          command: |
+            shopt -s nocasematch
+            case $(git log --oneline --format=%B -n 1 HEAD) in chore*) exit 1;; esac
+      - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version
       - run:
