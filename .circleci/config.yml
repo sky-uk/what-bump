@@ -50,8 +50,6 @@ workflows:
   build:
     jobs:
       - build
-  release:
-    jobs:
       - release:
           requires:
             - build
