@@ -3,7 +3,7 @@ version: 2
 jobs:
   build:
     docker:
-      - image: ekidd/rust-musl-builder:1.38.0
+      - image: &rustMusl ekidd/rust-musl-builder:1.38.0
     steps:
       - checkout
       - run:
@@ -22,7 +22,7 @@ jobs:
             - &cacheKey v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Build what-bump
-          command: cargo build --release
+          command: cargo build
       - run:
           name: Run all tests
           command: cargo test --all
@@ -34,4 +34,29 @@ jobs:
             - target/debug/deps
           key: *cacheKey
       - store_artifacts:
+          path: target/x86_64-unknown-linux-musl/debug/what-bump
+  release:
+    docker:
+      - image: *rustMusl
+    steps:
+      - checkout
+      - run:
+          name: Build what-bump release
+          command: cargo build --release
+      - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build
+  release:
+    requires:
+      - build
+    jobs:
+      - release:
+          filters:
+            tags:
+              only: /^[0-9]+\.[0-9]+\.[0-9]+.*/
+            branches:
+              ignore: /.*/
