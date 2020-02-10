@@ -17,15 +17,15 @@ maintenance = { status = "actively-developed" }
 
 [dependencies]
 semver = "0.9"
-structopt = "0.3.3"
+structopt = "0.3.9"
 simple-error = "0.2"
 fallible-iterator = "0.2.0"
-askama = "0.8"
-chrono = "0.4.9"
+askama = "0.9"
+chrono = "0.4"
 log = "0.4.8"
 stderrlog = "0.4.3"
 lazy_static = "1.4.0"
 
 [dependencies.git2]
-version = "0.10"
+version = "0.11"
 default-features = false
