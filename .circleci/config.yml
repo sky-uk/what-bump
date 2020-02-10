@@ -50,11 +50,10 @@ workflows:
   build:
     jobs:
       - build
-      - release:
+      - request-release:
+          type: approval
           requires:
             - build
-          filters:
-            tags:
-              only: /^[0-9]+\.[0-9]+\.[0-9]+.*/
-            branches:
-              ignore: /.*/
+      - release:
+          requires:
+            - request-release
