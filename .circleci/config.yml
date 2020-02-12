@@ -22,7 +22,7 @@ jobs:
             - &cacheKey v4-cargo-cache-{{ arch }}-{{ checksum "Cargo.lock" }}
       - run:
           name: Build what-bump
-          command: cargo build
+          command: cargo build --release
       - run:
           name: Run all tests
           command: cargo test --all
@@ -32,28 +32,31 @@ jobs:
             - target/debug/.fingerprint
             - target/debug/build
             - target/debug/deps
+            - target/x86_64-unknown-linux-musl/.fingerprint
+            - target/x86_64-unknown-linux-musl/build
+            - target/x86_64-unknown-linux-musl/deps
           key: *cacheKey
       - store_artifacts:
-          path: target/x86_64-unknown-linux-musl/debug/what-bump
-  release:
-    docker:
-      - image: *rustMusl
-    steps:
-      - checkout
-      - run:
-          name: Build what-bump release
-          command: cargo build --release
-      - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
+#  release:
+#    docker:
+#      - image: *rustMusl
+#    steps:
+#      - checkout
+#      - run:
+#          name: Build what-bump release
+#          command: cargo build --release
+#      - store_artifacts:
+#          path: target/x86_64-unknown-linux-musl/release/what-bump
 workflows:
   version: 2
   build:
     jobs:
       - build
-      - request-release:
-          type: approval
-          requires:
-            - build
-      - release:
-          requires:
-            - request-release
+#      - request-release:
+#          type: approval
+#          requires:
+#            - build
+#      - release:
+#          requires:
+#            - request-release
