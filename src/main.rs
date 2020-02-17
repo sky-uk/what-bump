@@ -14,6 +14,7 @@ use crate::changelog::ChangeLog;
 mod bumping;
 mod repo;
 mod changelog;
+mod error;
 
 lazy_static! {
     static ref STRICT_HELP: String = format!(r#"Quit with an error if non-conventional commit messages are found.
