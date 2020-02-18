@@ -1,11 +1,12 @@
 use std::error::Error;
 use std::fmt::{Debug, Formatter};
 use std::fmt;
-use log::warn;
 
-use git2::{Commit, Repository};
-use simple_error::SimpleError;
 use fallible_iterator::FallibleIterator;
+use git2::{Commit, ObjectType, Repository, Revwalk};
+use simple_error::SimpleError;
+
+use crate::error::ToSimpleError;
 
 /// A git Repository whose messages respect the Conventional Commits specification
 ///
@@ -28,17 +29,28 @@ impl std::str::FromStr for ConventionalRepo {
 
 impl ConventionalRepo {
     pub fn commits_up_to<'a>(&'a self, revision: &str) -> Result<CommitIterator<'a>, Box<dyn Error>> {
+        let up_to = self.0.revparse_single(revision)?.peel_to_commit()?;
+        let mut walker= self.0.revwalk()?;
+        walker.push_head()?;
+        walker.hide(up_to.id())?;
+
         let result = CommitIterator {
-            up_to: self.0.revparse_single(revision)?.peel_to_commit()?,
-            current_commit: self.0.head()?.peel_to_commit()?,
+            repo: &self.0,
+            walker
         };
         Ok(result)
     }
 }
 
 pub struct CommitIterator<'a> {
-    up_to: Commit<'a>,
-    current_commit: Commit<'a>,
+    repo: &'a Repository,
+    walker: Revwalk<'a>,
+}
+
+impl ToSimpleError for git2::Error {
+    fn to_simple_error(&self) -> SimpleError {
+        SimpleError::new(format!("{:?}", self))
+    }
 }
 
 impl<'a> FallibleIterator for CommitIterator<'a> {
@@ -46,18 +58,16 @@ impl<'a> FallibleIterator for CommitIterator<'a> {
     type Error = SimpleError;
 
     fn next(&mut self) -> Result<Option<Self::Item>, Self::Error> {
-        let n_parents = self.current_commit.parent_count();
-        if self.up_to.id() == self.current_commit.id() || n_parents == 0 {
-            Ok(None)
-        } else {
-            if n_parents > 1 {
-                // FIXME we need to handle multi-parent commits, at least in the case where there's an
-                // unambiguous chain to the `up_to` revision
-                warn!("Commit {} has more than one parent", self.current_commit.id());
-            }
-            let result = self.current_commit.clone();
-            self.current_commit = self.current_commit.parent(0).unwrap_or(self.up_to.clone());
-            Ok(Some(result))
+
+        match self.walker.next() {
+            Some(Ok(oid)) => Ok(Some(
+                self.repo.find_object(oid, Some(ObjectType::Commit))
+                    .map_err(|e| e.to_simple_error())?
+                    .peel_to_commit()
+                    .map_err(|e| e.to_simple_error())?
+            )),
+            Some(Err(error)) => Err(error.to_simple_error()),
+            None => Ok(None),
         }
     }
 }
