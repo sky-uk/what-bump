@@ -1,8 +1,11 @@
-FROM rust:1.36
+FROM rust:1.36 as build
 
 WORKDIR /usr/src/myapp
 COPY . .
 
-RUN cargo install --path .
+RUN cargo build --release && cp target/release/what-bump /
 
-CMD ["what-bump"]
+FROM scratch
+COPY --from=build /what-bump /what-bump
+
+CMD /what-bump
