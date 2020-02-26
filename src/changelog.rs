@@ -58,26 +58,26 @@ impl ChangeLog<'_> {
         });
         result
     }
-}
 
-pub fn save(path_buf: &PathBuf, content: &[u8], overwrite: bool) -> Result<(), Box<dyn Error>> {
-    let mut previous_file_content = Vec::new();
+    pub fn save(&mut self, path_buf: &PathBuf, overwrite: bool) -> Result<(), Box<dyn Error>> {
+        let mut previous_file_content = Vec::new();
 
-    if !overwrite && path_buf.exists() {
-        OpenOptions::new()
-            .read(true)
-            .open(path_buf)?
-            .read_to_end(&mut previous_file_content)?;
+        if !overwrite && path_buf.exists() {
+            OpenOptions::new()
+                .read(true)
+                .open(path_buf)?
+                .read_to_end(&mut previous_file_content)?;
+        }
+
+        let mut file = OpenOptions::new()
+            .write(true)
+            .truncate(true)
+            .create(true)
+            .open(path_buf)?;
+
+        file.write_all(self.render()?.as_ref())?;
+        file.write_all(previous_file_content.as_ref())?;
+
+        Ok(())
     }
-
-    let mut file = OpenOptions::new()
-        .write(true)
-        .truncate(true)
-        .create(true)
-        .open(path_buf)?;
-
-    file.write_all(content)?;
-    file.write_all(previous_file_content.as_ref())?;
-
-    Ok(())
 }

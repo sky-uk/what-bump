@@ -135,13 +135,11 @@ fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
         .unwrap_or(max_bump_type.to_string());
 
     if let Some(cl_path) = config.changelog {
-        use askama::Template;
-
         let mut changelog = ChangeLog::new(config.path.commits_up_to(&up_to_revision)?);
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        changelog::save(&cl_path, changelog.render()?.as_ref(), config.overwrite)?;
+        changelog.save(&cl_path, config.overwrite)?;
     }
     println!("{}", output);
     Ok(())
