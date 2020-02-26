@@ -10,6 +10,7 @@ use fallible_iterator::FallibleIterator;
 use git2::Commit;
 use semver::Version;
 use simple_error::SimpleError;
+use log::error;
 
 use crate::bumping::{BumpType, LogEntry};
 
@@ -52,7 +53,7 @@ impl ChangeLog<'_> {
                     BumpType::Major => result.breaking.push(entry),
                     BumpType::None => result.other.push(entry),
                 },
-                _ => () // FIXME add logging
+                Err(e) => error!("{}", e),
             }
             Ok(())
         });
