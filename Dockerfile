@@ -1,11 +1,24 @@
-FROM rust:1.36 as build
+FROM clux/muslrust
+WORKDIR /
 
-WORKDIR /usr/src/myapp
-COPY . .
+# create a new empty project
+RUN USER=root cargo new --lib dummy-project
+WORKDIR /dummy-project
 
-RUN cargo build --release && cp target/release/what-bump /
+# copy over manifests
+COPY ./Cargo.lock ./Cargo.lock
+COPY ./Cargo.toml ./Cargo.toml
+
+# cache dependencies
+RUN cargo build --release
+RUN rm src/*
+
+# copy source tree
+COPY ./src ./src
+COPY ./templates ./templates
+RUN cargo build --release
 
 FROM scratch
-COPY --from=build /what-bump /what-bump
+COPY --from=0 /dummy-project/target/x86_64-unknown-linux-musl/release/what-bump .
 
-CMD /what-bump
+ENTRYPOINT ["./what-bump"]
