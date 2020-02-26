@@ -31,6 +31,15 @@ based on all the commit messages up to a previous revision. You need to specify 
 the previous revision is (we assume you have it tagged and know enough `bash` magic to
 do it) and what the current version is (ditto).
 
+## Installation
+
+The easiest way to get `what-bump` is installing it using [cargo](https://doc.rust-lang.org/cargo/getting-started/installation.html),
+with the following command:
+
+    cargo install what-bump
+
+If you prefer Docker, there is an official image on dockerhub: https://hub.docker.com/r/albx79/what-bump
+
 ## Usage
 
 Just type
@@ -64,10 +73,6 @@ will be ignored and won't contribute to a version bump.
 1.36 to build (that's what I used). Install rust following the instructions on the official
 website. 
 
-To  install from [crates.io](https://crates.io) just type
-
-    cargo install what-bump
-
 It depends on [git2-rs](https://github.com/alexcrichton/git2-rs), which requires
 libgit2 to be installed on your system. It should already be available if you're using git.
 
@@ -86,4 +91,6 @@ the Dockerfile provided:
 
     docker build . -t what-bump
 
-    
+And then run it with e.g.:
+
+    docker run -v $PWD:/data what-bump --path /data --help
