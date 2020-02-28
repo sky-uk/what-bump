@@ -21,4 +21,4 @@ RUN cargo build --release
 FROM scratch
 COPY --from=0 /dummy-project/target/x86_64-unknown-linux-musl/release/what-bump .
 
-ENTRYPOINT ["./what-bump"]
+ENTRYPOINT ["/what-bump"]
