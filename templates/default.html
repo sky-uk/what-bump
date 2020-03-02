@@ -1,0 +1,41 @@
+<html>
+    <head>
+        <title>Release {{version}} ({{date}})</title>
+    </head>
+    <body>
+        <h1>Release {{version}} ({{date}})</h1>
+        {% if breaking -%}
+        <h2>⚠ BREAKING CHANGES</h2>
+        <ul>
+        {% for i in breaking -%}
+            <li>{%if i.scope%}<b>{{i.scope}}</b>: {%endif%}{{i.description}}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {%- if features -%}
+        <h2>Features</h2>
+        <ul>
+        {% for i in features -%}
+            <li>{%if i.scope%}<b>{{i.scope}}</b>: {%endif%}{{i.description}}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {%- if fixes -%}
+        <h2>Bug Fixes</h2>
+        <ul>
+        {% for i in fixes -%}
+            <li>{%if i.scope%}<b>{{i.scope}}</b>: {%endif%}{{i.description}}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        {%- if other -%}
+        <h2>Other Changes</h2>
+        <ul>
+        {% for i in other -%}
+            <li>{%if i.scope%}<b>{{i.scope}}</b>: {%endif%}{{i.description}}</li>
+        {% endfor %}
+        </ul>
+        {% endif %}
+        <hr>
+    </body>
+</html>

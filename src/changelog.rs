@@ -3,6 +3,7 @@ use std::error::Error;
 use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::PathBuf;
+use std::collections::HashMap;
 
 use chrono::prelude::*;
 use fallible_iterator::FallibleIterator;
@@ -11,10 +12,26 @@ use semver::Version;
 use simple_error::SimpleError;
 use log::error;
 use tera::{Tera, Context};
+use lazy_static::lazy_static;
 
 use crate::bumping::{BumpType, LogEntry};
 
-pub static DEFAULT_MD: &str = include_str!("../templates/default.md");
+lazy_static! {
+    pub static ref DEFAULT_TEMPLATES: HashMap<&'static str, &'static str> = {
+        let mut map = HashMap::new();
+        map.insert("default.md", include_str!("../templates/default.md"));
+        map.insert("default.html", include_str!("../templates/default.html"));
+        map
+    };
+}
+
+/// Identifies the template for changelog generation
+pub enum TemplateType {
+    /// a user-provided template
+    File(PathBuf),
+    /// one of what-bump's default templates
+    Internal(String)
+}
 
 /// Contains all data needed to write the changelog
 pub struct ChangeLog {
@@ -73,7 +90,7 @@ impl ChangeLog {
         result
     }
 
-    pub fn save(&self, path_buf: &PathBuf, overwrite: bool) -> Result<(), Box<dyn Error>> {
+    pub fn save(&self, path_buf: &PathBuf, overwrite: bool, template: TemplateType) -> Result<(), Box<dyn Error>> {
         let mut previous_file_content = Vec::new();
 
         if !overwrite && path_buf.exists() {
@@ -90,10 +107,17 @@ impl ChangeLog {
             .open(path_buf)?;
 
         let mut tera = Tera::default();
-        tera.add_raw_template("default.md", DEFAULT_MD)?;
-        let result = tera.render("default.md", &self.into())?;
+        let template_name = match template {
+            TemplateType::Internal(ref name) => {
+                tera.add_raw_template(&name, DEFAULT_TEMPLATES[name.as_str()])?;
+                name
+            }
+            _ => unimplemented!(),
+        };
 
-        file.write_all(result.as_ref())?;
+        let result = tera.render(template_name, &self.into())?;
+
+        file.write_all(&result.as_ref())?;
         file.write_all(previous_file_content.as_ref())?;
 
         Ok(())

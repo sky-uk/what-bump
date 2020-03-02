@@ -9,7 +9,7 @@ use log::{warn, error};
 use lazy_static::lazy_static;
 
 use crate::bumping::{Bump, BumpType};
-use crate::changelog::ChangeLog;
+use crate::changelog::{ChangeLog, TemplateType};
 
 mod bumping;
 mod repo;
@@ -21,6 +21,10 @@ lazy_static! {
 
 Default behaviour is to simply print a warning. Conventional messages start with
 one of the following types: {}."#, bumping::OTHER_TYPES.join(", "));
+
+    static ref TEMPLATE_ID_HELP: String = format!(r#"Use one of the changelog templates provided by `what-bump` (cannot be used with --template)
+
+The available template IDs are: {}."#, changelog::DEFAULT_TEMPLATES.iter().map(|e| *e.0).collect::<Vec<_>>().join(", "));
 }
 
 /// Detect version bump based on Conventional Commits
@@ -71,6 +75,13 @@ struct Config {
     /// Verbose mode (-v, -vv, -vvv, etc)
     #[structopt(long, short, parse(from_occurrences))]
     verbose: usize,
+
+    /// Specify a custom template file for the changelog (cannot be used with --template-id)
+    #[structopt(long, short, conflicts_with = "template_id")]
+    template: Option<String>,
+
+    #[structopt(long, help = &TEMPLATE_ID_HELP, conflicts_with = "template")]
+    template_id: String,
 }
 
 struct ParseError {
@@ -139,7 +150,7 @@ fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        changelog.save(&cl_path, config.overwrite)?;
+        changelog.save(&cl_path, config.overwrite, TemplateType::Internal(config.template_id))?;
     }
     println!("{}", output);
     Ok(())
