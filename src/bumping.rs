@@ -7,6 +7,7 @@ use git2::Commit;
 use semver::Version;
 use simple_error::SimpleError;
 use log::debug;
+use serde::Serialize;
 
 /// Extension methods for `&str`, useful for handling conventional commits
 pub trait FirstLine<'a> {
@@ -53,16 +54,16 @@ impl FirstLine<'_> for &str {
 /// A change-log entry
 ///
 /// Can be created from a git commit
-pub struct LogEntry<'a> {
+#[derive(Serialize)]
+pub struct LogEntry {
     pub scope: Option<String>,
     pub description: String,
-    pub commit: Commit<'a>,
 }
 
-impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
+impl<'a> TryFrom<Commit<'a>> for LogEntry {
     type Error = Box<dyn Error>;
 
-    fn try_from(commit: Commit<'a>) -> Result<LogEntry<'a>, Box<dyn Error>> {
+    fn try_from(commit: Commit<'a>) -> Result<LogEntry, Box<dyn Error>> {
         let commit_msg = commit.message().ok_or(SimpleError::new("No commit message"))?;
         let first_line = commit_msg.first_line();
         let (prefix, description) = first_line.split_at_colon();
@@ -73,7 +74,6 @@ impl<'a> TryFrom<Commit<'a>> for LogEntry<'a> {
         Ok(LogEntry {
             scope: prefix.as_str().extract_scope(),
             description: description.to_owned(),
-            commit,
         })
     }
 }

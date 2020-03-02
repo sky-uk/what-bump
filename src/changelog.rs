@@ -4,29 +4,29 @@ use std::fs::OpenOptions;
 use std::io::{Read, Write};
 use std::path::PathBuf;
 
-use askama::Template;
 use chrono::prelude::*;
 use fallible_iterator::FallibleIterator;
 use git2::Commit;
 use semver::Version;
 use simple_error::SimpleError;
 use log::error;
+use tera::{Tera, Context};
 
 use crate::bumping::{BumpType, LogEntry};
 
+pub static DEFAULT_MD: &str = include_str!("../templates/default.md");
+
 /// Contains all data needed to write the changelog
-#[derive(Template)]
-#[template(path = "CHANGELOG.md", escape = "none")]
-pub struct ChangeLog<'a> {
+pub struct ChangeLog {
     pub version: Version,
     pub date: NaiveDate,
-    pub fixes: Vec<LogEntry<'a>>,
-    pub features: Vec<LogEntry<'a>>,
-    pub breaking: Vec<LogEntry<'a>>,
-    pub other: Vec<LogEntry<'a>>,
+    pub fixes: Vec<LogEntry>,
+    pub features: Vec<LogEntry>,
+    pub breaking: Vec<LogEntry>,
+    pub other: Vec<LogEntry>,
 }
 
-impl Default for ChangeLog<'_> {
+impl Default for ChangeLog {
     fn default() -> Self {
         let today = Local::today();
         ChangeLog {
@@ -40,9 +40,22 @@ impl Default for ChangeLog<'_> {
     }
 }
 
-impl ChangeLog<'_> {
-    pub fn new<'a, I: FallibleIterator<Item=Commit<'a>, Error=SimpleError>>(commits: I) -> ChangeLog<'a> {
-        let mut result = ChangeLog::<'a>::default();
+impl<'a> std::convert::From<&ChangeLog> for Context {
+    fn from(c: &ChangeLog) -> Self {
+        let mut ctx = Context::new();
+        ctx.insert("version", &c.version.to_string());
+        ctx.insert("date", &c.date.to_string());
+        ctx.insert("fixes", &c.fixes);
+        ctx.insert("features", &c.features);
+        ctx.insert("breaking", &c.breaking);
+        ctx.insert("other", &c.other);
+        ctx
+    }
+}
+
+impl ChangeLog {
+    pub fn new<'a, I: FallibleIterator<Item=Commit<'a>, Error=SimpleError>>(commits: I) -> ChangeLog {
+        let mut result = ChangeLog::default();
         let _ = commits.for_each(|ref commit| {
             let msg = commit.message().unwrap_or_default();
             let bump_type = BumpType::parse_commit_msg(msg);
@@ -60,7 +73,7 @@ impl ChangeLog<'_> {
         result
     }
 
-    pub fn save(&mut self, path_buf: &PathBuf, overwrite: bool) -> Result<(), Box<dyn Error>> {
+    pub fn save(&self, path_buf: &PathBuf, overwrite: bool) -> Result<(), Box<dyn Error>> {
         let mut previous_file_content = Vec::new();
 
         if !overwrite && path_buf.exists() {
@@ -76,7 +89,11 @@ impl ChangeLog<'_> {
             .create(true)
             .open(path_buf)?;
 
-        file.write_all(self.render()?.as_ref())?;
+        let mut tera = Tera::default();
+        tera.add_raw_template("default.md", DEFAULT_MD)?;
+        let result = tera.render("default.md", &self.into())?;
+
+        file.write_all(result.as_ref())?;
         file.write_all(previous_file_content.as_ref())?;
 
         Ok(())
