@@ -10,7 +10,7 @@ use fallible_iterator::FallibleIterator;
 use git2::Commit;
 use semver::Version;
 use simple_error::SimpleError;
-use log::error;
+use log::warn;
 use tera::{Tera, Context};
 use lazy_static::lazy_static;
 
@@ -31,6 +31,16 @@ pub enum TemplateType {
     File(PathBuf),
     /// one of what-bump's default templates
     Internal(String)
+}
+
+impl TemplateType {
+    pub fn from_cli(template_file: Option<PathBuf>, template_id: String) -> Self {
+        if let Some(path) = template_file {
+            TemplateType::File(path)
+        } else {
+            TemplateType::Internal(template_id)
+        }
+    }
 }
 
 /// Contains all data needed to write the changelog
@@ -83,7 +93,7 @@ impl ChangeLog {
                     BumpType::Major => result.breaking.push(entry),
                     BumpType::None => result.other.push(entry),
                 },
-                Err(e) => error!("{}", e),
+                Err(e) => warn!("{}", e),
             }
             Ok(())
         });
@@ -108,14 +118,17 @@ impl ChangeLog {
 
         let mut tera = Tera::default();
         let template_name = match template {
-            TemplateType::Internal(ref name) => {
+            TemplateType::Internal(name) => {
                 tera.add_raw_template(&name, DEFAULT_TEMPLATES[name.as_str()])?;
                 name
             }
-            _ => unimplemented!(),
+            TemplateType::File(path) => {
+                tera.add_template_file(&path, None)?;
+                path.to_string_lossy().to_string()
+            },
         };
 
-        let result = tera.render(template_name, &self.into())?;
+        let result = tera.render(&template_name, &self.into())?;
 
         file.write_all(&result.as_ref())?;
         file.write_all(previous_file_content.as_ref())?;

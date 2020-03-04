@@ -77,10 +77,10 @@ struct Config {
     verbose: usize,
 
     /// Specify a custom template file for the changelog (cannot be used with --template-id)
-    #[structopt(long, short, conflicts_with = "template_id")]
-    template: Option<String>,
+    #[structopt(long, short)]
+    template: Option<PathBuf>,
 
-    #[structopt(long, help = &TEMPLATE_ID_HELP, conflicts_with = "template")]
+    #[structopt(long, help = &TEMPLATE_ID_HELP, default_value = "default.md")]
     template_id: String,
 }
 
@@ -106,7 +106,7 @@ fn main() {
 
 fn print_error_cause(error: &dyn Error) {
     if let Some(error) = error.source() {
-        error!("caused by {}", error);
+        error!("  caused by: {}", error);
         print_error_cause(error);
     }
 }
@@ -150,7 +150,7 @@ fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        changelog.save(&cl_path, config.overwrite, TemplateType::Internal(config.template_id))?;
+        changelog.save(&cl_path, config.overwrite, TemplateType::from_cli(config.template, config.template_id))?;
     }
     println!("{}", output);
     Ok(())
