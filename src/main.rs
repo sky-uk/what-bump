@@ -54,8 +54,11 @@ struct Config {
     path: repo::ConventionalRepo,
 
     /// Also generate a changelog, and write it to this file.
+    ///
+    /// You can put placeholders between double-brackets (e.g. `{{version}}` or `{{date}}`),
+    /// which will be substituted with their actual values.
     #[structopt(long, short)]
-    changelog: Option<PathBuf>,
+    changelog: Option<String>,
 
     /// Perform the specified version bump (you must also specify `--from`).
     ///

@@ -100,13 +100,19 @@ impl ChangeLog {
         result
     }
 
-    pub fn save(&self, path_buf: &PathBuf, overwrite: bool, template: TemplateType) -> Result<(), Box<dyn Error>> {
+    pub fn save(&self, path_template: &String, overwrite: bool, template: TemplateType) -> Result<(), Box<dyn Error>> {
+        let mut tera = Tera::default();
+        let context = self.into();
         let mut previous_file_content = Vec::new();
+        let path_buf = {
+            tera.add_raw_template("<PATH>", &path_template)?;
+            PathBuf::from(tera.render("<PATH>", &context)?)
+        };
 
         if !overwrite && path_buf.exists() {
             OpenOptions::new()
                 .read(true)
-                .open(path_buf)?
+                .open(&path_buf)?
                 .read_to_end(&mut previous_file_content)?;
         }
 
@@ -114,9 +120,8 @@ impl ChangeLog {
             .write(true)
             .truncate(true)
             .create(true)
-            .open(path_buf)?;
+            .open(&path_buf)?;
 
-        let mut tera = Tera::default();
         let template_name = match template {
             TemplateType::Internal(name) => {
                 tera.add_raw_template(&name, DEFAULT_TEMPLATES[name.as_str()])?;
@@ -128,7 +133,7 @@ impl ChangeLog {
             },
         };
 
-        let result = tera.render(&template_name, &self.into())?;
+        let result = tera.render(&template_name, &context)?;
 
         file.write_all(&result.as_ref())?;
         file.write_all(previous_file_content.as_ref())?;
