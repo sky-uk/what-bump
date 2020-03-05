@@ -9,7 +9,7 @@ use log::{warn, error};
 use lazy_static::lazy_static;
 
 use crate::bumping::{Bump, BumpType};
-use crate::changelog::ChangeLog;
+use crate::changelog::{ChangeLog, TemplateType};
 
 mod bumping;
 mod repo;
@@ -21,6 +21,10 @@ lazy_static! {
 
 Default behaviour is to simply print a warning. Conventional messages start with
 one of the following types: {}."#, bumping::OTHER_TYPES.join(", "));
+
+    static ref TEMPLATE_ID_HELP: String = format!(r#"Use one of the changelog templates provided by `what-bump` (cannot be used with --template)
+
+The available template IDs are: {}."#, changelog::DEFAULT_TEMPLATES.iter().map(|e| *e.0).collect::<Vec<_>>().join(", "));
 }
 
 /// Detect version bump based on Conventional Commits
@@ -50,8 +54,11 @@ struct Config {
     path: repo::ConventionalRepo,
 
     /// Also generate a changelog, and write it to this file.
+    ///
+    /// You can put placeholders between double-brackets (e.g. `{{version}}` or `{{date}}`),
+    /// which will be substituted with their actual values.
     #[structopt(long, short)]
-    changelog: Option<PathBuf>,
+    changelog: Option<String>,
 
     /// Perform the specified version bump (you must also specify `--from`).
     ///
@@ -71,6 +78,13 @@ struct Config {
     /// Verbose mode (-v, -vv, -vvv, etc)
     #[structopt(long, short, parse(from_occurrences))]
     verbose: usize,
+
+    /// Specify a custom template file for the changelog (cannot be used with --template-id)
+    #[structopt(long, short)]
+    template: Option<PathBuf>,
+
+    #[structopt(long, help = &TEMPLATE_ID_HELP, default_value = "default.md")]
+    template_id: String,
 }
 
 struct ParseError {
@@ -95,7 +109,7 @@ fn main() {
 
 fn print_error_cause(error: &dyn Error) {
     if let Some(error) = error.source() {
-        error!("caused by {}", error);
+        error!("  caused by: {}", error);
         print_error_cause(error);
     }
 }
@@ -139,7 +153,7 @@ fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
         if let Some(new_version) = new_version {
             changelog.version = new_version;
         }
-        changelog.save(&cl_path, config.overwrite)?;
+        changelog.save(&cl_path, config.overwrite, TemplateType::from_cli(config.template, config.template_id))?;
     }
     println!("{}", output);
     Ok(())
