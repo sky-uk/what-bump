@@ -45,7 +45,7 @@ impl TemplateType {
 
 /// Contains all data needed to write the changelog
 pub struct ChangeLog {
-    pub version: Version,
+    pub version: String,
     pub date: NaiveDate,
     pub fixes: Vec<LogEntry>,
     pub features: Vec<LogEntry>,
@@ -57,7 +57,7 @@ impl Default for ChangeLog {
     fn default() -> Self {
         let today = Local::today();
         ChangeLog {
-            version: Version::parse("0.0.0").unwrap(),
+            version: "0.0.0".to_owned(),
             date: NaiveDate::from_yo(today.year(), today.ordinal()),
             fixes: vec![],
             features: vec![],

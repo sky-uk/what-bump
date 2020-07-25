@@ -49,6 +49,13 @@ struct Config {
     #[structopt(long, short)]
     from: Option<Version>,
 
+    /// New version of your software (for changelog)
+    ///
+    /// Manually specify the new version of your software. Useful if you're just generating
+    /// the changelog.
+    #[structopt(long, short, requires = "changelog")]
+    new_version: Option<String>,
+
     /// Location of the GIT repo.
     #[structopt(long, short, default_value = "./")]
     path: repo::ConventionalRepo,
@@ -150,7 +157,7 @@ fn what_bump(config: Config) -> Result<(), Box<dyn Error>> {
 
     if let Some(cl_path) = config.changelog {
         let mut changelog = ChangeLog::new(config.path.commits_up_to(&up_to_revision)?);
-        if let Some(new_version) = new_version {
+        if let Some(new_version) = config.new_version.or(new_version.map(|v| v.to_string())) {
             changelog.version = new_version;
         }
         changelog.save(&cl_path, config.overwrite, TemplateType::from_cli(config.template, config.template_id))?;
