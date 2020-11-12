@@ -4,7 +4,7 @@ set -ex
 # 1. Versioning
 LATEST_VERSION=$(git tag | grep -E '[0-9]+.[0-9]+.[0-9]+.*' | sort -rV | head -1)
 NEW_VERSION=$(what-bump --from "$LATEST_VERSION" "$LATEST_VERSION" --changelog CHANGELOG.md --overwrite)
-sed -i "" -e "s/0.0.0-UNRELEASED/$NEW_VERSION/g" Cargo.toml
+sed -i -e "s/0.0.0-UNRELEASED/$NEW_VERSION/g" Cargo.toml
 
 # 2. Commit, Tag, and Create Release
 cargo check
