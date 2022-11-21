@@ -1,9 +1,12 @@
-version: 2
+version: 2.1
 
 jobs:
   build:
     docker:
-      - image: &rustMusl ekidd/rust-musl-builder:1.38.0
+      - image: ekidd/rust-musl-builder:1.57.0
+        auth:
+          username: $DOCKERHUB_USERNAME
+          password: $DOCKERHUB_PASSWORD
     steps:
       - checkout
       - run:
@@ -38,25 +41,11 @@ jobs:
           key: *cacheKey
       - store_artifacts:
           path: target/x86_64-unknown-linux-musl/release/what-bump
-#  release:
-#    docker:
-#      - image: *rustMusl
-#    steps:
-#      - checkout
-#      - run:
-#          name: Build what-bump release
-#          command: cargo build --release
-#      - store_artifacts:
-#          path: target/x86_64-unknown-linux-musl/release/what-bump
+
 workflows:
   version: 2
   build:
     jobs:
-      - build
-#      - request-release:
-#          type: approval
-#          requires:
-#            - build
-#      - release:
-#          requires:
-#            - request-release
+      - build:
+          context:
+            - skyita-mobile
