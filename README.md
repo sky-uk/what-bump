@@ -84,6 +84,14 @@ Then you can install it locally with
 
     cargo install --path .
 
+#### For macOS
+Install cargo and then:
+
+```shell
+cargo build --release --target=x86_64-apple-darwin
+```
+Executable will be found at `target/x86_64-apple-darwin/release/what-bump`
+
 ### With Docker
 
 Alternatively, if you have docker, you can build `what-bump` using 
