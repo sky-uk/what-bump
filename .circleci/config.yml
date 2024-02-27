@@ -3,7 +3,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: ekidd/rust-musl-builder:1.57.0
+      - image: rust:alpine
         auth:
           username: $DOCKERHUB_USERNAME
           password: $DOCKERHUB_PASSWORD
@@ -12,8 +12,8 @@ jobs:
       - run:
           name: Skip post-release commit
           command: |
-            shopt -s nocasematch
-            case $(git log --oneline --format=%B -n 1 HEAD) in "chore: restore UNRELEASED version") circleci step halt;; esac
+            apk add bash musl-dev
+            bash -c 'shopt -s nocasematch; case $(git log --oneline --format=%B -n 1 HEAD) in "chore: restore UNRELEASED version") circleci step halt;; esac'
       - run:
           name: Version information
           command: rustc --version; cargo --version; rustup --version
